@@ -1,3 +1,14 @@
+# Workhorse worker capabilities
+
+This repository now includes a **durable concurrent task runner** for assistant-delegated work.
+See [the worker guide](worker/README.md) for execution, engineering/logistics planning,
+command policies, tests and measured-capacity benchmarking. The worker is a local
+execution sidecar; it is not yet a hosted AI service or an installed ChatGPT plugin.
+
+The original Gradle Play Publisher implementation and documentation follow unchanged.
+
+---
+
 <p align="center">
     <img alt="Logo" src="assets/logo.svg" width="25%" />
 </p>
