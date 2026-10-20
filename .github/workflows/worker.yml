@@ -1,0 +1,21 @@
+name: Workhorse worker
+on:
+  pull_request:
+    paths: ['worker/**', '.github/workflows/worker.yml']
+  push:
+    paths: ['worker/**', '.github/workflows/worker.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m unittest discover -s worker/tests -v
+      - run: python worker/benchmark.py --jobs 40 --workers 4
