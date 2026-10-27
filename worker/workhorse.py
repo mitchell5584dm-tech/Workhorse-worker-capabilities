@@ -2,10 +2,12 @@
 """Workhorse: durable, local, allowlisted task execution. Python 3.11+."""
 import argparse
 import hashlib
+import http.server
 import json
 import math
 import os
 import sqlite3
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -200,6 +202,34 @@ def execute(capability, payload, root, policy=None):
     raise ValueError('Unknown capability')
 
 
+def start_health_server(port=None):
+    """Start a minimal HTTP health server in a background thread.
+
+    Render web services must bind to a port.  This runs a tiny server on the
+    PORT env var (default 10000) so Render's health check passes while the
+    worker loop runs in the main thread.
+    """
+    if port is None:
+        port = int(os.environ.get('PORT', 10000))
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = b'{"status":"ok"}'
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass  # suppress per-request access logs
+
+    server = http.server.HTTPServer(('', port), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    return server
+
+
 def run_one(db, root, max_running=8, policy=None):
     job = claim(db, max_running=max_running)
     if job is None:
@@ -244,6 +274,7 @@ def main():
         return
     if args.command == 'serve':
         from supervisor import serve
+        start_health_server()
         print(json.dumps(serve(args.db, args.root, args.concurrency, args.idle_exit, policy=args.policy)))
         return
     db = connect(args.db)
