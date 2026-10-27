@@ -13,6 +13,7 @@ CAPABILITIES = ('inventory', 'validate_json', 'unit_economics', 'capacity_plan',
 
 
 def connect(path):
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(path, timeout=30)
     db.row_factory = sqlite3.Row
     db.execute('PRAGMA journal_mode=WAL')
