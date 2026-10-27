@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import sqlite3
 import time
 import uuid
@@ -235,6 +236,9 @@ def main():
     for name in ('status', 'events', 'cancel'):
         sub.add_parser(name).add_argument('id')
     args = parser.parse_args()
+    # Allow the DB path to be overridden by an environment variable so the
+    # start command in Render's dashboard doesn't need to be changed manually.
+    args.db = os.environ.get('WORKHORSE_DB', args.db)
     if args.command == 'capabilities':
         print(json.dumps(CAPABILITIES))
         return
